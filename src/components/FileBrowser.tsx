@@ -20,7 +20,6 @@ import {
   type AudioMetadata,
 } from "../utils/audioAnalyzer";
 import { BRAINWAVE_STATES } from "../utils/brainwaveFrequencies";
-import { isBlockedForState } from "../utils/interferenceDetector";
 import { GeekButton, GeekInput } from "./ui";
 
 const AUDIO_FILTER = {

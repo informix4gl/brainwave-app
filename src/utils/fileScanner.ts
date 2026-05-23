@@ -12,7 +12,7 @@ import {
 import type { AudioFeatures, AudioMetadata } from "./audioAnalyzer";
 export { analyzeAudioFeatures } from "./audioAnalyzer";
 export type { AudioFeatures, AudioMetadata } from "./audioAnalyzer";
-import { detectInterference, type InterferenceInfo, type InterferenceResult } from "./interferenceDetector";
+import { detectInterference, type InterferenceResult } from "./interferenceDetector";
 export type { InterferenceInfo, InterferenceResult } from "./interferenceDetector";
 
 export interface AudioFileInfo {

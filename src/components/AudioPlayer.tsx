@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "../i18n";
 import { useAudioEngine } from "../hooks/useAudioEngine";
 import { useBrainSync } from "../context/BrainSyncContext";
