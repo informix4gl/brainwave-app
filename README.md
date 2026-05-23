@@ -10,7 +10,7 @@
 </p>
 
 <p align="center"><strong>v0.1.1</strong> — Brainwave Entrainment Desktop App · 脑波同化音乐桌面应用</p>
-<p align="center">Tauri v2 + React 18 + TypeScript · Web Audio API · Geek/Hacker Terminal Aesthetic · 中/EN 双语</p>
+<p align="center">Tauri v2 + React 18 + TypeScript · Web Audio API · Geek Terminal Aesthetic · 中/EN 双语</p>
 
 ---
 
