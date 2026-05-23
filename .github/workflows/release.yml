@@ -76,21 +76,21 @@ jobs:
       - name: Extract Portable .exe (Windows)
         if: runner.os == 'Windows'
         run: |
-          $exeName = "brainwave-app.exe"
+          $exeName = "BrainSync.exe"
           $portableName = "BrainSync_${{ github.ref_name }}_Portable_x64.exe"
           $src = "src-tauri/target/release/$exeName"
           if (!(Test-Path $src)) {
-            Write-Error "Binary not found: $src"
+            Write-Error "Portable binary not found at: $src"
             exit 1
           }
           Copy-Item $src $portableName
-          Write-Host "Portable binary created: $portableName"
+          Write-Host "Portable binary ready: $portableName ($((Get-Item $portableName).Length) bytes)"
 
-      # 8. 将绿色便携版挂载到 GitHub Release
+      # 8. 将绿色便携版挂载到 GitHub Release Assets
       - name: Upload Portable .exe to Release
         if: runner.os == 'Windows'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $portableName = "BrainSync_${{ github.ref_name }}_Portable_x64.exe"
-          gh release upload ${{ github.ref_name }} $portableName --clobber
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: BrainSync_${{ github.ref_name }}_Portable_x64.exe
+          fail_on_unmatched_files: true
