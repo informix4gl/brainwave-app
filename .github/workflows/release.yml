@@ -57,7 +57,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      # 6. 使用 Tauri Action 构建
+      # 6. 使用 Tauri Action 构建 + 发布 NSIS 安装包
       - name: Build with Tauri
         uses: tauri-apps/tauri-action@v0
         env:
@@ -71,3 +71,26 @@ jobs:
             See [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
           releaseDraft: false
           prerelease: false
+
+      # 7. 提取 Windows 纯绿色便携版 .exe 单文件
+      - name: Extract Portable .exe (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $exeName = "brainwave-app.exe"
+          $portableName = "BrainSync_${{ github.ref_name }}_Portable_x64.exe"
+          $src = "src-tauri/target/release/$exeName"
+          if (!(Test-Path $src)) {
+            Write-Error "Binary not found: $src"
+            exit 1
+          }
+          Copy-Item $src $portableName
+          Write-Host "Portable binary created: $portableName"
+
+      # 8. 将绿色便携版挂载到 GitHub Release
+      - name: Upload Portable .exe to Release
+        if: runner.os == 'Windows'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $portableName = "BrainSync_${{ github.ref_name }}_Portable_x64.exe"
+          gh release upload ${{ github.ref_name }} $portableName --clobber
