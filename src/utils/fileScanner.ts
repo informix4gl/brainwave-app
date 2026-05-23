@@ -12,6 +12,8 @@ import {
 import type { AudioFeatures, AudioMetadata } from "./audioAnalyzer";
 export { analyzeAudioFeatures } from "./audioAnalyzer";
 export type { AudioFeatures, AudioMetadata } from "./audioAnalyzer";
+import { detectInterference, type InterferenceInfo, type InterferenceResult } from "./interferenceDetector";
+export type { InterferenceInfo, InterferenceResult } from "./interferenceDetector";
 
 export interface AudioFileInfo {
   name: string;
@@ -32,6 +34,7 @@ export interface ScoredFile extends AudioFileInfo {
   allScores: ScoredBrainwave[];
   metadata?: AudioMetadata | null;
   features?: AudioFeatures | null;
+  interference?: InterferenceResult | null;
 }
 
 /* ── Tauri Command Wrappers ── */
@@ -319,7 +322,23 @@ export function analyzeFile(
     features,
   );
 
-  const cfg = BRAINWAVE_STATES[state];
+  // Run dual-audit interference detection
+  const interference = detectInterference(file.metadata, features);
+
+  // If interference is detected and the recommended brainwave is blocked,
+  // fall back to the highest-scoring non-blocked state
+  let finalState = state;
+  if (interference.blockedStates.includes(state)) {
+    for (const scored of allScores) {
+      if (!interference.blockedStates.includes(scored.state)) {
+        finalState = scored.state;
+        break;
+      }
+    }
+    // If all states blocked, keep original but note interference
+  }
+
+  const cfg = BRAINWAVE_STATES[finalState];
   const reason =
     reasonParts.length > 0
       ? reasonParts.join(" | ")
@@ -327,11 +346,12 @@ export function analyzeFile(
 
   return {
     ...file,
-    brainwave: state,
+    brainwave: finalState,
     score,
     reason,
     allScores,
     features: features ?? null,
+    interference: interference.info ? interference : null,
   };
 }
 

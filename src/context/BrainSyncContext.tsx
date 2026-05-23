@@ -10,6 +10,7 @@ import {
 } from "react";
 import type { BrainwaveState } from "../utils/brainwaveFrequencies";
 import { audioEngine, type EngineStatus, type NatureSoundType } from "../utils/audioEngine";
+import type { InterferenceResult } from "../utils/interferenceDetector";
 
 type BrainSyncContextValue = {
   selectedState: BrainwaveState;
@@ -24,6 +25,8 @@ type BrainSyncContextValue = {
   fileName: string | null;
   handleFileSelect: (file: File) => Promise<void>;
   audioStatus: EngineStatus;
+  interference: InterferenceResult | null;
+  setInterference: (r: InterferenceResult | null) => void;
 };
 
 const BrainSyncContext = createContext<BrainSyncContextValue | null>(null);
@@ -36,6 +39,7 @@ export function BrainSyncProvider({ children }: { children: ReactNode }) {
   const [hasAudio, setHasAudio] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [audioStatus, setAudioStatus] = useState<EngineStatus>("idle");
+  const [interference, setInterference] = useState<InterferenceResult | null>(null);
 
   // Sync audio engine status
   useState(() => {
@@ -74,6 +78,8 @@ export function BrainSyncProvider({ children }: { children: ReactNode }) {
       fileName,
       handleFileSelect,
       audioStatus,
+      interference,
+      setInterference,
     }),
     [
       selectedState,
@@ -85,6 +91,7 @@ export function BrainSyncProvider({ children }: { children: ReactNode }) {
       fileName,
       handleFileSelect,
       audioStatus,
+      interference,
     ]
   );
 

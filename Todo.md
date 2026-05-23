@@ -30,7 +30,6 @@
 - [x] Geek-styled card component (terminal window look)
 - [x] Layout shell: header nav + main content area + footer
 - [x] Navigation component with active-route highlighting (green underline)
-- [x] Matrix rain background effect (optional decorative — skipped, low priority)
 - [x] Responsive grid system (1-col mobile, 2-col desktop)
 
 ---
@@ -38,27 +37,24 @@
 ## ✅ Phase 2: i18n — 中英切换
 
 - [x] Language context/provider (React Context)
-- [x] Translation dictionary (zh / en) for all current UI strings
+- [x] Translation dictionary (zh / en) for all UI strings
 - [x] Language toggle button in header (中/EN)
-- [x] Translate all static page content (home, nav, footer)
-- [x] Translate brainwave state names & descriptions (in BRAINWAVE_STATES config)
-- [x] Translate music genre / mood / tempo labels (in MOOD_LABELS / TEMPO_LABELS / GENRE_LABELS)
+- [x] Translate all static page content (nav, footer, about)
+- [x] Translate brainwave state names & descriptions
+- [x] Translate music genre / mood / tempo labels
 - [x] Translate error messages & notifications
 - [x] Persist language preference (localStorage)
-- [x] Light/Dark theme toggle (bonus — theme context + CSS palettes)
+- [x] Light/Dark theme toggle
 
 ---
 
 ## ✅ Phase 3: Brainwave Core Logic
 
-- [x] `BrainwaveState` type definition (delta | theta | alpha | beta | gamma)
+- [x] `BrainwaveState` type (delta | theta | alpha | beta | gamma)
 - [x] `BRAINWAVE_STATES` config: id, name/nameZh, freq range, defaultFreq, color, symbol, description/descriptionZh, benefits
-- [x] Mood-to-brainwave mapping (9 moods → brainwave states)
-- [x] Tempo-to-brainwave mapping (5 tempos → brainwave states)
-- [x] Genre-to-brainwave mapping (9 genres → brainwave states)
-- [x] Frequency range utility: `getFrequencyRange(state)` + `clampFrequency` + `getDefaultFrequency`
-- [x] BrainSync React Context: selectedState, customFreq, matchedStates, audio state
-- [x] `matchBrainwaveStates` algorithm: intersection → frequency-ranked union fallback
+- [x] Mood / Tempo / Genre → brainwave mappings
+- [x] Frequency range utility: `getFrequencyRange` + `clampFrequency` + `getDefaultFrequency`
+- [x] BrainSync React Context: selectedState, customFreq, audio state
 - [x] Bilingual labels for all moods, tempos, genres (en/zh)
 
 ---
@@ -67,142 +63,157 @@
 
 - [x] `BrainwaveAudioEngine` singleton class
 - [x] AudioContext lifecycle (create, resume, suspend, close)
-- [x] Binaural beat oscillators (left ear = baseFreq, right ear = baseFreq + binauralFreq)
+- [x] Binaural beat oscillators: left = baseFreq, right = baseFreq + binauralFreq
 - [x] Audio node graph: oscillators → merger → binauralGain → masterGain → destination
 - [x] User audio loading: File.arrayBuffer → decodeAudioData → BufferSource
-- [x] User audio node: userSource → userGain → masterGain
 - [x] Triple volume sliders: binaural beat + noise mask + music volume
-- [x] AnalyserNode for real-time FFT data (256-point)
+- [x] AnalyserNode for real-time FFT (256-point)
 - [x] `requestAnimationFrame` visualization loop (canvas bar chart)
 - [x] Play / Pause / Resume / Stop methods
 - [x] `useAudioEngine` React hook: status, error, full controls, export
-- [x] WAV export via OfflineAudioContext rendering
+- [x] WAV export via OfflineAudioContext
 - [x] MP3 export (192kbps via lamejs)
-- [ ] Isochronic AM modulation (LFO on master gain) — deferred, low priority
 
 ---
 
 ## ✅ Phase 5: Local File Scanning (Tauri)
 
-- [x] Tauri Rust command: `scan_audio_files` — recursive directory scan (mp3, wav, flac, ogg, aac, m4a, wma, opus)
-- [x] Tauri command: returns file metadata (name, path, extension)
-- [x] Tauri fs: read audio file as `Uint8Array` for Web Audio decoding
-- [x] File browser UI component (scrollable geek-styled table)
+- [x] Rust command: `scan_audio_files` — recursive directory scan (mp3, wav, flac, ogg, aac, m4a, wma, opus)
+- [x] Rust command: `read_audio_file_bytes` — read file as Uint8Array
+- [x] Rust command: `read_audio_metadata` — ID3 metadata extraction
+- [x] File browser UI (scrollable geek-styled table)
 - [x] Smart keyword matching: filename analysis → brainwave auto-recommendation
-- [x] Drag-and-drop file support (Tauri `.path` API + drop zone validation)
-- [x] Recently-opened files list (localStorage, max 8, quick-load buttons)
+- [x] Drag-and-drop file support (Tauri `.path` API + drop zone)
+- [x] Recently-opened files list (localStorage, max 8)
+- [x] "recent" label i18n + clear button
 
 ---
 
-## ✅ Phase 6: Music Match Page (`/match`) — merged into `/generate`
+## ✅ Phase 6: Studio Page Unification
 
-- [x] Mood/Tempo/Genre selectors → removed (not useful; analysis is automatic)
-- [x] FileBrowser + Binaural + AudioPlayer → merged into `/generate` (avoided duplication)
-
----
-
-## ✅ Phase 7: Brainwave Generation Page (`/generate`) — now the main working page
-
-- [x] Brainwave state selector grid (5 buttons with symbol + name + freq range)
-- [x] Selected state description panel with benefit tags
-- [x] Custom frequency slider (fine-tune within state's range)
-- [x] FileBrowser: folder scan + smart keyword recommendations
-- [x] Binaural beat explanation panel
-- [x] Song recommendation cards (filtered by selected brainwave state)
-- [x] Each card: title, artist, genre badge, bilingual description
+- [x] `/match` removed — Mood/Tempo/Genre selectors dropped (analysis is automatic)
+- [x] Home page removed — direct landing on `/` = studio
+- [x] `/generate` = main working page: FileBrowser + Brainwave selector + Binaural + AudioPlayer
+- [x] Song recommendation cards filtered by selected brainwave state
 - [x] "No recommendations" fallback UI
-- [x] Merged: `/match` removed, all functionality unified on `/generate`
 
 ---
 
-## ✅ Phase 8: Audio Player & Visualization
+## ✅ Phase 7: Audio Player & Visualization
 
-- [x] Canvas-based real-time frequency bar visualization
-- [x] Bar colors match selected brainwave state
-- [x] Status indicator: idle (grey dot) / playing (green pulsing dot) / paused (yellow dot)
-- [x] Frequency range display (e.g., "Alpha · 8–13 Hz")
+- [x] Canvas-based real-time FFT frequency bar visualization (per-state color)
+- [x] Status indicator: idle (grey dot) / playing (color pulsing dot) / paused (yellow dot)
 - [x] Error message display (red terminal-style alert)
 - [x] Play / Pause / Stop button group (geek-styled)
-- [x] Binaural beat volume slider with help text
-- [x] Noise mask volume slider with help text
-- [x] Music volume slider with help text
-- [x] "Play with User Audio" button (mix binaural + uploaded music)
-- [x] Export WAV / MP3 buttons
+- [x] Export WAV / MP3 with progress indicator + auto-open folder option
+- [x] Keyboard shortcuts: Space=play/pause, Esc=stop, 1-5=brainwave states, Q=Quantum Sync toggle
 
 ---
 
-## ✅ Phase 9: Frequency Reference Panel
+## ✅ Phase 8: Routing & Navigation
 
-- [x] Static legend showing all 5 brainwave states (in BrainwaveSelector)
-- [x] Color bar, name (zh/en), frequency range, icon for each state
-- [x] Compact card design — appears in left sidebar on Match & Generate pages
-
----
-
-## ✅ Phase 10: Routing & Navigation
-
-- [x] `/` — Studio page (brainwave selector + song recs + file browser + binaural + AudioPlayer)
+- [x] `/` — Studio page
 - [x] `/about` — About page (features, how it works, tech stack, disclaimer)
-- [x] Home page removed — landing directly on studio saves a click
-- [x] Route group layout: AppHeader + children + footer
-- [x] `/match` removed — functionality merged into `/generate`
-- [x] Loading skeletons (Suspense fallback, page layout matching)
-- [x] Error boundary (root-level, geek-styled fatal error display)
+- [x] Route group layout: AppHeader + main content + footer
+- [x] Loading skeletons (Suspense fallback)
+- [x] Error boundary (root-level, geek-styled fatal error)
 - [x] 404 Not Found page (geek-styled)
 
 ---
 
-## 🔄 Phase 11: Polish & QA
+## ✅ Phase 9: Polish & QA
 
-- [x] Full i18n coverage — all UI strings use translation keys, no mixed zh/en
-- [x] Font size slider in header (10–25px range, persisted to localStorage)
-- [x] Grid layout: 2-col continuous stacks (selector+audio | detail+songs), no gaps
-- [x] Pages merged: `/match` removed, HomePage removed, `/` = studio
+- [x] Full i18n coverage — zero hardcoded strings
+- [x] Font size slider in header (10–25px, persisted)
 - [x] Developer credit: "Teng Zuo" in footer
-- [x] UX flow redesign: Step 1 load audio → Step 2 select brainwave (with auto-detection) → Step 3 tune & play
-- [x] Keyboard shortcuts (Space = play/pause, Esc = stop, 1-5 = brainwave states)
-- [x] Error handling for all Tauri commands (better Rust messages + retry button)
-- [x] Volume slider help text with per-brainwave-state recommendations
-- [x] MP3 export (192kbps, alongside WAV)
-- [x] About page (/about) — features, how it works, tech stack, disclaimer
-- [x] Test on Windows build (`npm run tauri build`)
-- [x] Consistent geek aesthetic audit (CSS variables verified, no hardcoded colors)
-- [x] Performance profiling (FFT animFrame only runs when playing, canvas cleared on stop)
+- [x] Footer version: BrainSync v0.1.1
+- [x] Keyboard shortcuts legend in info banner
+- [x] Error handling for all Tauri commands (retry button)
+- [x] Consistent geek aesthetic (CSS variables, no hardcoded colors)
+- [x] Performance: FFT animFrame only runs when playing, canvas cleared on stop
 - [x] Explanatory text font size +50% (`text-[10px]`→`text-[15px]`, `text-xs`→`text-[18px]`)
-- [ ] Smooth transitions between pages (N/A — single page app)
-- [ ] Audio engine cleanup on route change (N/A — single page app)
 
 ---
 
-## ✅ Phase 12: Carrier Frequency Control & Natural Sound Masking
+## ✅ Phase 10: Carrier Frequency Control & Natural Sound Masking
 
-- [x] audioEngine.ts: Replace hardcoded CARRIER_FREQ with instance state `_carrierFreq`
-- [x] audioEngine.ts: Add `NatureSoundType` (brown/pink/white/ocean/rain/stream)
-- [x] audioEngine.ts: Rewrite `createNoiseBuffer` with 6-way branching noise generator
-  - brown: existing random-walk · pink: Paul Kellet 6-stage · white: raw random
-  - ocean: brown + 0.12Hz tidal LFO · rain: high-pass + rapid density mod · stream: bandpass + irregular mod
-- [x] audioEngine.ts: `setCarrierFrequency` with real-time `setTargetAtTime` oscillator update
-- [x] audioEngine.ts: `setNatureSoundType` with cache invalidation + live buffer swap (no glitch)
-- [x] audioEngine.ts: Rename `setBinauralVolume` → `setCarrierVolume` (public API)
-- [x] audioEngine.ts: `buildGraph` uses dynamic `_carrierFreq`
-- [x] audioEngine.ts: `exportAudio` uses dynamic carrier + includes nature sound layer
-- [x] useAudioEngine.ts: Expose `carrierFreq`, `carrierVol`, `natureType` + setters
-- [x] BrainSyncContext.tsx: Add `carrierFreq` / `natureType` to shared context
-- [x] AudioPlayer.tsx: New 5-control layout (carrier freq, carrier vol, type selector, nature vol, music vol)
-- [x] AudioPlayer.tsx: Warnings section (headphone reminder + carrier min volume tip)
-- [x] GeneratePage.tsx: Dynamic carrier frequency in binaural explanation
-- [x] translations.ts: 16 new keys (carrier freq/vol, 6 nature types, help texts, warnings)
-- [x] translations.ts: Updated `binaural.carrier`, `about.howDesc3` (white noise → natural sound)
-- [x] Verify: `npx tsc --noEmit` — zero errors
+- [x] Replace hardcoded `CARRIER_FREQ` with instance state `_carrierFreq` (100–500Hz)
+- [x] `NatureSoundType`: brown / pink / white / ocean / rain / stream
+- [x] 6-way branching noise generator (brown random-walk, pink Paul Kellet, white random, ocean tidal LFO, rain high-pass, stream bandpass)
+- [x] `setCarrierFrequency` real-time `setTargetAtTime` oscillator update
+- [x] `setNatureSoundType` cache invalidation + live buffer swap (no glitch)
+- [x] `setBinauralVolume` → `setCarrierVolume` (public API rename)
+- [x] `exportAudio` includes dynamic carrier + nature sound layer
+- [x] 5-control AudioPlayer layout (carrier freq, carrier vol, type selector, nature vol, music vol)
+- [x] Headphone reminder + carrier min volume tip in AudioPlayer
+- [x] Dynamic carrier frequency display in GeneratePage binaural explanation
+- [x] 16 new i18n keys + updated `about.howDesc3`
 
 ---
 
-## ✅ Phase 14: Git Version Control Setup
+## ✅ Phase 11: Advanced Dynamic Synchronization (Quantum Sync) · 量子同化引擎
 
-- [x] Create standard `.gitignore` (node_modules, target, .env, dist, etc.)
+- [x] `src/services/DynamicSyncModulator.ts` — core algorithm
+- [x] Sinusoidal micro-sweep: ±0.5Hz, ~37s period
+- [x] Chaotic drift: 4 incommensurate sine oscillators, bounded ±0.15Hz
+- [x] Golden ratio harmonic: 0.618φ secondary beat frequency
+- [x] Secondary oscillator pair + gain node + channel merger in audio graph
+- [x] AM breathing: low-frequency LFO (0.02–0.5Hz) on carrier amplitude
+- [x] AM gain node inserted between binauralGain and masterGain
+- [x] Real-time frequency update loop (150ms `setTimeout`, `setTargetAtTime` smoothing)
+- [x] Export pipeline: secondary layer + AM snapshot included in offline render
+- [x] **Sync Target Nodes**: Node-10 Somatic Hibernation (Theta) + Node-12 Core Expansion (Alpha)
+- [x] `SYNC_NODE_PRESETS` lookup table with brainwave, amRate, amDepth, factor, sweep presets
+- [x] **Hardened UI**: 4 split sliders (Secondary Factor, Secondary Gain, AM Depth, Sweep Amplitude)
+- [x] Neon-glow `[进阶模式: 量子同化]` toggle with per-state color
+- [x] Sync node pill-button selector (Manual / Node-10 / Node-12)
+- [x] **Preset-lock UX**: sliders disabled + greyed when preset active; Secondary Gain always adjustable
+- [x] **Deep-linkage fix**: `setSyncNode` always writes preset values to instance state (even with null modulator)
+- [x] Node-10 click → auto-switches brainwave to Theta + injects params + restarts audio if playing
+- [x] Node-12 click → auto-switches brainwave to Alpha + injects params + restarts audio if playing
+- [x] Auto-exit `useEffect`: switching brainwave away from preset target auto-clears syncNode
+- [x] Full i18n (zh/en) for all Quantum Sync labels, hints, and help texts
+- [x] Q key shortcut toggles Quantum Sync
+- [x] GeneratePage banner + AboutPage updated with Quantum Sync descriptions
+- [x] **Special Thanks**: Michael Wu 分享了门罗研究所 (The Monroe Institute) Hemi-Sync 技术理念，启发了量子同化引擎的设计方向
+
+---
+
+## ✅ Phase 12: Genre Metadata + BPM Anti-Interference Audit · 流派元数据 + BPM 防干扰双重审计
+
+- [x] `src/utils/interferenceDetector.ts` — dual-layer audit engine
+- [x] Genre blacklist (22 keywords): Rap, Hiphop, Rock, Metal, Punk, Dubstep, DnB, Hardcore, Hardstyle, Trap, Drill, etc.
+- [x] BPM threshold: > 120 = high-interference rhythm track
+- [x] Protected states: Delta, Theta, Alpha — blocked from receiving interference-heavy tracks
+- [x] Auto-fallback: when recommended brainwave is blocked, reroute to highest non-blocked state
+- [x] `ScoredFile.interference` field — detection result through full analysis pipeline
+- [x] Integrated into all 4 file-load paths: browse file, table click, drag-drop, recent files
+- [x] `!` interference warning badge in file browser table (red=danger, amber=warning)
+- [x] `BrainSyncContext.interference` — shared state for cross-component warning propagation
+- [x] Cyberpunk terminal alert panel in AudioPlayer: red/amber, genre hits + BPM value + recommendation
+- [x] Full i18n (zh/en) for all warning labels, descriptions, and recommendations
+
+---
+
+## ✅ Phase 13: UI Compact Mode & Collapsible Help Texts · 折叠式说明文本
+
+- [x] `CollapsibleText` component: 2-line clamp + 更多/More toggle + 收起/Less expand
+- [x] Applied to all AudioPlayer help texts (carrier freq/vol, nature type/vol, music vol, Quantum Sync 4 sliders)
+- [x] Applied to AboutPage descriptions (tagline, whatDesc, howDesc ×5, thanksDesc, disclaimer)
+- [x] Applied to SongRecommendations track descriptions
+- [x] Explicitly excluded: workflow banner, brainwave details, binaural explanation, interference warning, headphone/carrier warnings
+- [x] Unused imports cleaned up
+
+---
+
+## ✅ Phase 14: Git & Changelog
+
+- [x] `.gitignore` (node_modules, target, .env, dist, etc.)
 - [x] Initialize local Git repository
 - [x] Configure identity: Teng Zuo <zuoteng@gmail.com>
 - [x] Initial commit: 75 files, 14,829 lines
+- [x] `CHANGELOG.md` — v0.9.0 through v0.13.0 with full release notes
+- [x] `.github/workflows/release.yml` — automated CI/CD for v* tags (Windows/macOS/Ubuntu)
 
 ---
 

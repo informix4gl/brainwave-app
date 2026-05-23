@@ -17,8 +17,10 @@ import {
 import {
   analyzeAudioFeatures,
   type AudioFeatures,
+  type AudioMetadata,
 } from "../utils/audioAnalyzer";
 import { BRAINWAVE_STATES } from "../utils/brainwaveFrequencies";
+import { isBlockedForState } from "../utils/interferenceDetector";
 import { GeekButton, GeekInput } from "./ui";
 
 const AUDIO_FILTER = {
@@ -50,7 +52,7 @@ function saveRecentFiles(files: RecentFile[]) {
 
 export default function FileBrowser() {
   const { t } = useLanguage();
-  const { selectedState, setSelectedState, handleFileSelect } = useBrainSync();
+  const { selectedState, setSelectedState, handleFileSelect, setInterference } = useBrainSync();
   const { status, stop, loadAudio } = useAudioEngine();
 
   const [dirPath, setDirPath] = useState("");
@@ -133,6 +135,7 @@ export default function FileBrowser() {
       );
       setSelectedState(scored.brainwave);
       setRecommendations(scored.allScores);
+      setInterference(scored.interference ?? null);
       setLoadedPath(filePath);
       addToRecent({ name, path: filePath, extension: ext });
     } catch (e) {
@@ -196,6 +199,7 @@ export default function FileBrowser() {
       );
       setSelectedState(scored.brainwave);
       setRecommendations(scored.allScores);
+      setInterference(scored.interference ?? null);
 
       // Update reason in table row with refined result
       setFiles((prev) =>
@@ -262,6 +266,27 @@ export default function FileBrowser() {
       const jsFile = new File([blob], nameWithExt, { type: `audio/${ext}` });
       await loadAudio(jsFile);
       handleFileSelect(jsFile);
+
+      // Full analysis: metadata + audio features + interference
+      let metadata: AudioMetadata | null = null;
+      if (filePath) {
+        metadata = await readAudioMetadata(filePath);
+      }
+      let features: AudioFeatures | null = null;
+      if (audioEngine.audioBuffer) {
+        features = await new Promise<AudioFeatures>((resolve, reject) => {
+          setTimeout(() => {
+            try { resolve(analyzeAudioFeatures(audioEngine.audioBuffer!)); }
+            catch (e) { reject(e); }
+          }, 0);
+        });
+      }
+      const scored = analyzeFile(
+        { name, path: filePath ?? nameWithExt, extension: ext, metadata },
+        features,
+      );
+      setInterference(scored.interference ?? null);
+
       setLoadedPath(filePath ?? nameWithExt);
       if (filePath) addToRecent({ name, path: filePath, extension: ext });
     } catch (e) {
@@ -330,8 +355,19 @@ export default function FileBrowser() {
       {/* Recent files */}
       {recentFiles.length > 0 && (
         <div className="rounded-lg border border-[var(--accent)]/15 bg-[var(--accent)]/[0.02] p-3">
-          <div className="text-[15px] font-mono text-[var(--muted)]/60 uppercase tracking-wider mb-2">
-            <span className="text-[var(--accent)]">$</span> recent
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[15px] font-mono text-[var(--muted)]/60 uppercase tracking-wider">
+              <span className="text-[var(--accent)]">$</span> {t("fileBrowser.recent")}
+            </div>
+            <button
+              onClick={() => {
+                localStorage.removeItem(RECENT_FILES_KEY);
+                setRecentFiles([]);
+              }}
+              className="px-1.5 py-0.5 text-[10px] font-mono border border-[var(--border)] rounded text-[var(--muted)]/50 hover:text-red-400 hover:border-red-400/30 transition-colors cursor-pointer"
+            >
+              {t("fileBrowser.recentClear")}
+            </button>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {recentFiles.map((rf) => (
@@ -349,6 +385,24 @@ export default function FileBrowser() {
                     });
                     await loadAudio(jsFile);
                     handleFileSelect(jsFile);
+
+                    // Analysis + interference detection
+                    const meta = await readAudioMetadata(rf.path);
+                    let feats: AudioFeatures | null = null;
+                    if (audioEngine.audioBuffer) {
+                      feats = await new Promise<AudioFeatures>((resolve, reject) => {
+                        setTimeout(() => {
+                          try { resolve(analyzeAudioFeatures(audioEngine.audioBuffer!)); }
+                          catch (e) { reject(e); }
+                        }, 0);
+                      });
+                    }
+                    const sc = analyzeFile(
+                      { name: rf.name, path: rf.path, extension: rf.extension, metadata: meta },
+                      feats,
+                    );
+                    setInterference(sc.interference ?? null);
+
                     setLoadedPath(rf.path);
                     addToRecent(rf);
                   } catch (e) {
@@ -432,16 +486,31 @@ export default function FileBrowser() {
                         .{file.extension}
                       </td>
                       <td className="px-3 py-2">
-                        <span
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold"
-                          style={{
-                            background: cfg.color + "18",
-                            color: cfg.color,
-                            border: `1px solid ${cfg.color}30`,
-                          }}
-                        >
-                          {cfg.symbol} {cfg.name}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold"
+                            style={{
+                              background: cfg.color + "18",
+                              color: cfg.color,
+                              border: `1px solid ${cfg.color}30`,
+                            }}
+                          >
+                            {cfg.symbol} {cfg.name}
+                          </span>
+                          {file.interference?.info && (
+                            <span
+                              className="px-1 py-0.5 rounded text-[10px] font-mono border"
+                              style={{
+                                color: file.interference.info.level === "danger" ? "#f87171" : "#fbbf24",
+                                background: file.interference.info.level === "danger" ? "#f8717120" : "#fbbf2420",
+                                borderColor: file.interference.info.level === "danger" ? "#f8717140" : "#fbbf2440",
+                              }}
+                              title={t("interference.tableWarning")}
+                            >
+                              !
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-2 text-[var(--muted)]/60 hidden md:table-cell text-[10px] max-w-[200px] truncate">
                         {file.reason}

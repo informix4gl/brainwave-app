@@ -1,7 +1,7 @@
 "use client";
 
 import { useLanguage } from "../i18n";
-import { GeekCard } from "../components/ui";
+import { GeekCard, CollapsibleText } from "../components/ui";
 
 export default function AboutPage() {
   const { t } = useLanguage();
@@ -18,17 +18,19 @@ export default function AboutPage() {
   ██████╔╝██║  ██║██║  ██║██║██║ ╚████║███████║   ██║   ██║ ╚████║╚██████╗
   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═══╝ ╚═════╝`}
         </pre>
-        <p className="text-[18px] text-[var(--muted)] leading-relaxed">
-          {t("about.tagline")}
-        </p>
+        <CollapsibleText>
+          <p className="text-[18px] text-[var(--muted)] leading-relaxed">
+            {t("about.tagline")}
+          </p>
+        </CollapsibleText>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* What is it */}
         <GeekCard title={t("about.what")}>
           <div className="text-[18px] font-mono text-[var(--muted)] space-y-3 leading-relaxed">
-            <p>{t("about.whatDesc")}</p>
-            <p>{t("about.whatDesc2")}</p>
+            <CollapsibleText><p>{t("about.whatDesc")}</p></CollapsibleText>
+            <CollapsibleText><p>{t("about.whatDesc2")}</p></CollapsibleText>
           </div>
         </GeekCard>
 
@@ -49,6 +51,14 @@ export default function AboutPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--accent)] mt-0.5">▶</span>
+              <span>{t("about.featQuantumSync")}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[var(--accent)] mt-0.5">▶</span>
+              <span>{t("about.featSyncNodes")}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-[var(--accent)] mt-0.5">▶</span>
               <span>{t("about.featVisualizer")}</span>
             </li>
             <li className="flex items-start gap-2">
@@ -61,9 +71,11 @@ export default function AboutPage() {
         {/* How it works */}
         <GeekCard title={t("about.how")}>
           <div className="text-[18px] font-mono text-[var(--muted)] space-y-2 leading-relaxed">
-            <p>{t("about.howDesc1")}</p>
-            <p>{t("about.howDesc2")}</p>
-            <p>{t("about.howDesc3")}</p>
+            <CollapsibleText><p>{t("about.howDesc1")}</p></CollapsibleText>
+            <CollapsibleText><p>{t("about.howDesc2")}</p></CollapsibleText>
+            <CollapsibleText><p>{t("about.howDesc3")}</p></CollapsibleText>
+            <CollapsibleText><p>{t("about.howDesc4")}</p></CollapsibleText>
+            <CollapsibleText><p>{t("about.howDesc5")}</p></CollapsibleText>
           </div>
         </GeekCard>
 
@@ -87,11 +99,25 @@ export default function AboutPage() {
         </GeekCard>
       </div>
 
+      {/* Acknowledgments */}
+      <div className="mt-8 p-5 rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/[0.03]">
+        <h2 className="text-xs font-mono text-[var(--accent)] uppercase tracking-wider mb-3">
+          ♥ {t("about.thanks")}
+        </h2>
+        <CollapsibleText>
+          <p className="text-[18px] font-mono text-[var(--muted)] leading-relaxed">
+            {t("about.thanksDesc")}
+          </p>
+        </CollapsibleText>
+      </div>
+
       {/* Footer note */}
-      <div className="mt-8 p-4 rounded-lg border border-[var(--border)] bg-[var(--card)] text-center">
-        <p className="text-[18px] font-mono text-[var(--muted)]">
-          {t("about.disclaimer")}
-        </p>
+      <div className="mt-6 p-4 rounded-lg border border-[var(--border)] bg-[var(--card)] text-center">
+        <CollapsibleText>
+          <p className="text-[18px] font-mono text-[var(--muted)]">
+            {t("about.disclaimer")}
+          </p>
+        </CollapsibleText>
       </div>
     </div>
   );

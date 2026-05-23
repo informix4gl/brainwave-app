@@ -62,6 +62,12 @@ export default function GeneratePage() {
         e.preventDefault();
         audioEngine.stop();
       }
+
+      // Q key toggles Quantum Sync Pro-Mode
+      if (e.key === "q" || e.key === "Q") {
+        e.preventDefault();
+        audioEngine.setAdvancedSyncEnabled(!audioEngine.advancedEnabled);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -76,8 +82,10 @@ export default function GeneratePage() {
         <br />
         <span className="text-[var(--muted)]/60">
           {t("generate.banner.step1")}{"  "}
-          {t("generate.banner.step2")}{"  "}
-          {t("generate.banner.step3")}
+          {t("generate.banner.step2")}
+          <br />
+          {t("generate.banner.step3")}{"  "}
+          {t("generate.banner.step4")}
           <br />
           <span className="text-[var(--accent)]/50">
             {t("generate.shortcuts")}

@@ -2,6 +2,7 @@
 
 import type { BrainwaveState } from "./brainwaveFrequencies";
 import { BRAINWAVE_STATES } from "./brainwaveFrequencies";
+import { DynamicSyncModulator, type SyncNode } from "../services/DynamicSyncModulator";
 
 declare global {
   interface Window {
@@ -44,6 +45,21 @@ class BrainwaveAudioEngine {
   private _musicVol = 0.7;
   private _noiseVol = 0.15;
   private _natureType: NatureSoundType = "brown";
+  // Advanced Quantum Sync
+  private _advancedEnabled = false;
+  private _secondaryGain = 0.5;
+  private _secondaryFactor = 0.618;
+  private _sweepAmplitude = 0.5;
+  private _amDepth = 0.15;
+  private _amRate = 0.08;
+  private _syncNode: SyncNode | null = null;
+  private _modulator: DynamicSyncModulator | null = null;
+  private _leftOsc2: OscillatorNode | null = null;
+  private _rightOsc2: OscillatorNode | null = null;
+  private _secondaryGainNode: GainNode | null = null;
+  private _amGainNode: GainNode | null = null;
+  private _merger2: ChannelMergerNode | null = null;
+  private _freqUpdateTimer: number | null = null;
   private _startOffset = 0;
   private _startTime = 0;
   private _statusListeners = new Set<(s: EngineStatus) => void>();
@@ -207,6 +223,40 @@ class BrainwaveAudioEngine {
     this.rightOsc.frequency.value = this._carrierFreq + binauralFreq;
     this.rightOsc.connect(this.merger, 0, 1);
 
+    // Secondary oscillators (harmonically-linked) — Quantum Sync only
+    if (this._advancedEnabled) {
+      this._modulator = new DynamicSyncModulator(binauralFreq);
+      this._modulator.setSweepAmplitude(this._sweepAmplitude);
+      this._modulator.setSecondaryFactor(this._secondaryFactor);
+      this._modulator.setAmDepth(this._amDepth);
+      this._modulator.setAmRate(this._amRate);
+      if (this._syncNode) {
+        this._modulator.applySyncNodePreset(this._syncNode);
+      }
+
+      // AM breathing gain node — sits between binauralGain and masterGain
+      this._amGainNode = ctx.createGain();
+      this._amGainNode.gain.value = 1; // modulated in update loop
+
+      this._secondaryGainNode = ctx.createGain();
+      this._secondaryGainNode.gain.value = this._secondaryGain;
+      this._merger2 = ctx.createChannelMerger(2);
+
+      this._leftOsc2 = ctx.createOscillator();
+      this._leftOsc2.type = "sine";
+      this._leftOsc2.frequency.value = this._carrierFreq;
+      this._leftOsc2.connect(this._merger2, 0, 0);
+
+      this._rightOsc2 = ctx.createOscillator();
+      this._rightOsc2.type = "sine";
+      const secondaryBeat = binauralFreq * this._modulator.secondaryFactor;
+      this._rightOsc2.frequency.value = this._carrierFreq + secondaryBeat;
+      this._rightOsc2.connect(this._merger2, 0, 1);
+
+      this._merger2.connect(this._secondaryGainNode);
+      this._secondaryGainNode.connect(this.masterGain!);
+    }
+
     // Nature sound → noiseGain → masterGain (masks the pure tone)
     this.noiseSource = ctx.createBufferSource();
     this.noiseSource.buffer = this.createNoiseBuffer(ctx);
@@ -214,9 +264,14 @@ class BrainwaveAudioEngine {
     this.noiseSource.connect(this.noiseGain);
     this.noiseGain.connect(this.masterGain);
 
-    // Merger → binauralGain → masterGain
+    // Merger → binauralGain → (amGain) → masterGain
     this.merger.connect(this.binauralGain);
-    this.binauralGain.connect(this.masterGain);
+    if (this._advancedEnabled && this._amGainNode) {
+      this.binauralGain.connect(this._amGainNode);
+      this._amGainNode.connect(this.masterGain);
+    } else {
+      this.binauralGain.connect(this.masterGain);
+    }
 
     // masterGain → analyser → destination
     this.masterGain.connect(this.analyser);
@@ -243,6 +298,10 @@ class BrainwaveAudioEngine {
 
     this.leftOsc!.start(now);
     this.rightOsc!.start(now);
+    if (this._advancedEnabled && this._leftOsc2 && this._rightOsc2) {
+      this._leftOsc2.start(now);
+      this._rightOsc2.start(now);
+    }
     this.noiseSource!.start(now);
 
     if (this.userBuffer) {
@@ -252,6 +311,7 @@ class BrainwaveAudioEngine {
 
     this._startTime = now;
     this.setStatus("playing");
+    this.startFreqUpdateLoop();
   }
 
   pause() {
@@ -274,9 +334,13 @@ class BrainwaveAudioEngine {
   stop() {
     if (!this.ctx) return;
 
+    this.stopFreqUpdateLoop();
+
     try {
       this.leftOsc?.stop();
       this.rightOsc?.stop();
+      this._leftOsc2?.stop();
+      this._rightOsc2?.stop();
       this.userSource?.stop();
       this.noiseSource?.stop();
     } catch {
@@ -285,10 +349,15 @@ class BrainwaveAudioEngine {
 
     this.leftOsc?.disconnect();
     this.rightOsc?.disconnect();
+    this._leftOsc2?.disconnect();
+    this._rightOsc2?.disconnect();
     this.userSource?.disconnect();
     this.noiseSource?.disconnect();
     this.merger?.disconnect();
+    this._merger2?.disconnect();
     this.binauralGain?.disconnect();
+    this._secondaryGainNode?.disconnect();
+    this._amGainNode?.disconnect();
     this.userGain?.disconnect();
     this.noiseGain?.disconnect();
     this.masterGain?.disconnect();
@@ -296,14 +365,20 @@ class BrainwaveAudioEngine {
 
     this.leftOsc = null;
     this.rightOsc = null;
+    this._leftOsc2 = null;
+    this._rightOsc2 = null;
     this.userSource = null;
     this.noiseSource = null;
     this.merger = null;
+    this._merger2 = null;
     this.binauralGain = null;
+    this._secondaryGainNode = null;
+    this._amGainNode = null;
     this.userGain = null;
     this.noiseGain = null;
     this.masterGain = null;
     this.analyser = null;
+    this._modulator = null;
 
     this._startOffset = 0;
     this.setStatus("idle");
@@ -446,6 +521,48 @@ class BrainwaveAudioEngine {
     const masterGain = offlineCtx.createGain();
     masterGain.gain.value = 1;
     binauralGain.connect(masterGain);
+
+    // Secondary oscillators for export (frequency snapshot)
+    if (this._advancedEnabled) {
+      const tSnapshot = performance.now() / 1000;
+      const tmpMod = new DynamicSyncModulator(binauralFreq);
+      tmpMod.setSweepAmplitude(this._sweepAmplitude);
+      tmpMod.setSecondaryFactor(this._secondaryFactor);
+      tmpMod.setAmDepth(this._amDepth);
+      tmpMod.setAmRate(this._amRate);
+      if (this._syncNode) tmpMod.applySyncNodePreset(this._syncNode);
+      const secondaryFreq = tmpMod.getSecondaryFreq(tSnapshot);
+      const amSnapshot = tmpMod.getAmValue(tSnapshot);
+
+      const leftOsc2 = offlineCtx.createOscillator();
+      leftOsc2.type = "sine";
+      leftOsc2.frequency.value = this._carrierFreq;
+
+      const rightOsc2 = offlineCtx.createOscillator();
+      rightOsc2.type = "sine";
+      rightOsc2.frequency.value = this._carrierFreq + secondaryFreq;
+
+      const merger2 = offlineCtx.createChannelMerger(2);
+      leftOsc2.connect(merger2, 0, 0);
+      rightOsc2.connect(merger2, 0, 1);
+
+      const secondaryGain = offlineCtx.createGain();
+      secondaryGain.gain.value = this._secondaryGain;
+      merger2.connect(secondaryGain);
+      secondaryGain.connect(masterGain);
+
+      // AM gain node for breathing snapshot in export
+      const amGainExport = offlineCtx.createGain();
+      amGainExport.gain.value = amSnapshot;
+      binauralGain.disconnect();
+      binauralGain.connect(amGainExport);
+      amGainExport.connect(masterGain);
+
+      leftOsc2.start(0);
+      rightOsc2.start(0);
+      leftOsc2.stop(duration);
+      rightOsc2.stop(duration);
+    }
 
     // Nature sound layer — generated directly with offline sample rate to avoid cache mismatch
     const noiseBuf = offlineCtx.createBuffer(2, sampleRate * NOISE_BUFFER_SECS, sampleRate);
@@ -665,8 +782,129 @@ class BrainwaveAudioEngine {
     return new Blob([result.buffer], { type: "audio/mpeg" });
   }
 
+  /* ── Frequency Update Loop (Quantum Sync) ── */
+  private startFreqUpdateLoop() {
+    if (!this._advancedEnabled || !this._modulator) return;
+    this.stopFreqUpdateLoop();
+
+    const update = () => {
+      if (!this.ctx || !this._modulator || !this._advancedEnabled || this._status !== "playing") {
+        this._freqUpdateTimer = null;
+        return;
+      }
+      const tSec = performance.now() / 1000;
+      const primaryBeat = this._modulator.getPrimaryFreq(tSec);
+      const secondaryBeat = this._modulator.getSecondaryFreq(tSec);
+      const now = this.ctx.currentTime;
+
+      if (this.rightOsc) {
+        this.rightOsc.frequency.setTargetAtTime(
+          this._carrierFreq + primaryBeat, now, 0.08,
+        );
+      }
+      if (this._rightOsc2) {
+        this._rightOsc2.frequency.setTargetAtTime(
+          this._carrierFreq + secondaryBeat, now, 0.08,
+        );
+      }
+
+      // AM breathing — gentle gain modulation for tidal pulse
+      if (this._amGainNode) {
+        const amVal = this._modulator.getAmValue(tSec);
+        this._amGainNode.gain.setTargetAtTime(amVal, now, 0.15);
+      }
+
+      this._freqUpdateTimer = window.setTimeout(update, 150);
+    };
+    update();
+  }
+
+  private stopFreqUpdateLoop() {
+    if (this._freqUpdateTimer !== null) {
+      clearTimeout(this._freqUpdateTimer);
+      this._freqUpdateTimer = null;
+    }
+  }
+
+  /* ── Advanced Sync Control ── */
+  setAdvancedSyncEnabled(enabled: boolean) {
+    if (this._advancedEnabled === enabled) return;
+    this._advancedEnabled = enabled;
+    // Requires a full graph rebuild — stop current playback
+    const wasPlaying = this._status === "playing";
+    if (wasPlaying) {
+      this._startOffset += (this.ctx?.currentTime ?? 0) - this._startTime;
+    }
+    this.stop();
+    // Caller must restart playback for changes to take effect
+  }
+
+  setSweepAmplitude(amplitude: number) {
+    this._sweepAmplitude = Math.max(0, Math.min(2, amplitude));
+    if (this._modulator) {
+      this._modulator.setSweepAmplitude(this._sweepAmplitude);
+    }
+  }
+
+  setSecondaryGain(gain: number) {
+    this._secondaryGain = Math.max(0, Math.min(1, gain));
+    if (this._secondaryGainNode && this.ctx) {
+      this._secondaryGainNode.gain.setTargetAtTime(
+        this._secondaryGain, this.ctx.currentTime, 0.05,
+      );
+    }
+  }
+
+  setSecondaryFactor(factor: number) {
+    this._secondaryFactor = Math.max(0.1, Math.min(1.5, factor));
+    if (this._modulator) {
+      this._modulator.setSecondaryFactor(this._secondaryFactor);
+    }
+  }
+
+  setAmDepth(depth: number) {
+    this._amDepth = Math.max(0, Math.min(0.5, depth));
+    if (this._modulator) {
+      this._modulator.setAmDepth(this._amDepth);
+    }
+  }
+
+  setAmRate(rate: number) {
+    this._amRate = Math.max(0.02, Math.min(0.5, rate));
+    if (this._modulator) {
+      this._modulator.setAmRate(this._amRate);
+    }
+  }
+
+  setSyncNode(node: SyncNode | null) {
+    this._syncNode = node;
+    if (node) {
+      // Always compute preset values into instance state so UI reflects them,
+      // regardless of whether audio is currently playing.
+      const tmp = new DynamicSyncModulator(this._binauralFreq);
+      tmp.applySyncNodePreset(node);
+      this._secondaryFactor = tmp.secondaryFactor;
+      this._amDepth = tmp.amDepth;
+      this._amRate = tmp.amRate;
+      this._sweepAmplitude = tmp.sweepAmplitude;
+    }
+    // Also apply to the live modulator if audio is running
+    if (this._modulator) {
+      this._modulator.applySyncNodePreset(node);
+    }
+  }
+
+  get advancedEnabled(): boolean { return this._advancedEnabled; }
+  get sweepAmplitude(): number { return this._sweepAmplitude; }
+  get secondaryGain(): number { return this._secondaryGain; }
+  get secondaryFactor(): number { return this._secondaryFactor; }
+  get amDepth(): number { return this._amDepth; }
+  get amRate(): number { return this._amRate; }
+  get syncNode(): SyncNode | null { return this._syncNode; }
+
   /* ── Cleanup ── */
   destroy() {
+    this.stopFreqUpdateLoop();
     this.stop();
     this.ctx?.close();
     this.ctx = null;

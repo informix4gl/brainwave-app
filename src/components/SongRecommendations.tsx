@@ -7,6 +7,7 @@ import {
   getSongsByBrainwaveState,
   getGenreLabel,
 } from "../data/songRecommendations";
+import { CollapsibleText } from "../components/ui";
 
 export default function SongRecommendations() {
   const { t, locale } = useLanguage();
@@ -96,9 +97,11 @@ export default function SongRecommendations() {
                 </div>
 
                 {/* Description */}
-                <p className="text-[15px] font-mono text-[var(--muted)]/50 leading-relaxed line-clamp-2 group-hover:text-[var(--muted)]/70 transition-colors">
-                  {isZh ? song.descriptionZh : song.description}
-                </p>
+                <CollapsibleText>
+                  <p className="text-[15px] font-mono text-[var(--muted)]/50 leading-relaxed group-hover:text-[var(--muted)]/70 transition-colors">
+                    {isZh ? song.descriptionZh : song.description}
+                  </p>
+                </CollapsibleText>
               </div>
             ))}
           </div>
