@@ -76,7 +76,7 @@ jobs:
       - name: Extract Portable .exe (Windows)
         if: runner.os == 'Windows'
         run: |
-          $exeName = "BrainSync.exe"
+          $exeName = "app.exe"
           $portableName = "BrainSync_${{ github.ref_name }}_Portable_x64.exe"
           $src = "src-tauri/target/release/$exeName"
           if (!(Test-Path $src)) {
