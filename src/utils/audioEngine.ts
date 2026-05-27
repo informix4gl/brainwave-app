@@ -32,6 +32,7 @@ class BrainwaveAudioEngine {
   private userGain: GainNode | null = null;
   private userSource: AudioBufferSourceNode | null = null;
   private analyser: AnalyserNode | null = null;
+  private compressorNode: DynamicsCompressorNode | null = null;
   private userBuffer: AudioBuffer | null = null;
   private merger: ChannelMergerNode | null = null;
   private noiseSource: AudioBufferSourceNode | null = null;
@@ -47,7 +48,7 @@ class BrainwaveAudioEngine {
   private _natureType: NatureSoundType = "brown";
   // Advanced Quantum Sync
   private _advancedEnabled = false;
-  private _secondaryGain = 0.5;
+  private _secondaryGain = 0.2;
   private _secondaryFactor = 0.618;
   private _sweepAmplitude = 0.5;
   private _amDepth = 0.15;
@@ -273,9 +274,50 @@ class BrainwaveAudioEngine {
       this.binauralGain.connect(this.masterGain);
     }
 
-    // masterGain → analyser → destination
-    this.masterGain.connect(this.analyser);
+    // Soft-knee dynamics compressor — prevents clipping and smooths volume spikes
+    this.compressorNode = ctx.createDynamicsCompressor();
+    this.compressorNode.threshold.value = -12;
+    this.compressorNode.knee.value = 8;
+    this.compressorNode.ratio.value = 4;
+    this.compressorNode.attack.value = 0.005;
+    this.compressorNode.release.value = 0.05;
+
+    // masterGain → compressor → analyser → destination
+    this.masterGain.connect(this.compressorNode);
+    this.compressorNode.connect(this.analyser);
     this.analyser.connect(ctx.destination);
+
+    // Gain compensation: when advanced mode adds a secondary layer,
+    // reduce primary gain so total binaural energy stays consistent.
+    this.applyGainCompensation();
+  }
+
+  /* ── Gain Compensation ──
+   * When advanced mode is active, the secondary oscillator pair adds energy
+   * on top of the primary binaural beat. To keep the total perceived loudness
+   * stable when toggling advanced mode, we reduce the primary binauralGain
+   * proportionally to the secondary layer's contribution. */
+  private applyGainCompensation() {
+    if (!this.binauralGain || !this.ctx) return;
+
+    if (this._advancedEnabled) {
+      // avg AM gain over a full cycle is approximately 1 - amDepth/2
+      const avgAmGain = 1 - this._amDepth / 2;
+      // Fraction of total binaural energy to keep in primary (dry) layer.
+      // As secondaryGain increases, we pull back primaryGain to maintain
+      // roughly constant RMS energy in the mixed binaural output.
+      const primaryVol = this._carrierVol;
+      const secondaryVol = this._secondaryGain;
+      const totalTarget = primaryVol; // don't exceed the non-advanced level
+      // RMS energy constraint: (compGain * avgAmGain)^2 + secondaryVol^2 <= totalTarget^2
+      const energyBudget = Math.max(0, totalTarget * totalTarget - secondaryVol * secondaryVol);
+      const compGain = Math.sqrt(energyBudget) / Math.max(avgAmGain, 0.01);
+      // Clamp to reasonable range — never push below 25% of original
+      const clampedGain = Math.max(primaryVol * 0.25, Math.min(primaryVol, compGain));
+      this.binauralGain.gain.value = clampedGain;
+    } else {
+      this.binauralGain.gain.value = this._carrierVol;
+    }
   }
 
   /* ── User Audio ── */
@@ -361,6 +403,7 @@ class BrainwaveAudioEngine {
     this.userGain?.disconnect();
     this.noiseGain?.disconnect();
     this.masterGain?.disconnect();
+    this.compressorNode?.disconnect();
     this.analyser?.disconnect();
 
     this.leftOsc = null;
@@ -377,6 +420,7 @@ class BrainwaveAudioEngine {
     this.userGain = null;
     this.noiseGain = null;
     this.masterGain = null;
+    this.compressorNode = null;
     this.analyser = null;
     this._modulator = null;
 
@@ -426,11 +470,7 @@ class BrainwaveAudioEngine {
   setCarrierVolume(v: number) {
     this._carrierVol = Math.max(0, Math.min(1, v));
     if (this.binauralGain && this.ctx) {
-      this.binauralGain.gain.setTargetAtTime(
-        this._carrierVol,
-        this.ctx.currentTime,
-        0.05,
-      );
+      this.applyGainCompensation();
     }
   }
 
@@ -520,7 +560,6 @@ class BrainwaveAudioEngine {
 
     const masterGain = offlineCtx.createGain();
     masterGain.gain.value = 1;
-    binauralGain.connect(masterGain);
 
     // Secondary oscillators for export (frequency snapshot)
     if (this._advancedEnabled) {
@@ -533,6 +572,13 @@ class BrainwaveAudioEngine {
       if (this._syncNode) tmpMod.applySyncNodePreset(this._syncNode);
       const secondaryFreq = tmpMod.getSecondaryFreq(tSnapshot);
       const amSnapshot = tmpMod.getAmValue(tSnapshot);
+
+      // Gain compensation for export — same RMS-energy-preserving formula as live graph
+      const avgAmGain = 1 - this._amDepth / 2;
+      const energyBudget = Math.max(0, this._carrierVol * this._carrierVol - this._secondaryGain * this._secondaryGain);
+      const compGain = Math.sqrt(energyBudget) / Math.max(avgAmGain, 0.01);
+      const clampedGain = Math.max(this._carrierVol * 0.25, Math.min(this._carrierVol, compGain));
+      binauralGain.gain.value = clampedGain;
 
       const leftOsc2 = offlineCtx.createOscillator();
       leftOsc2.type = "sine";
@@ -562,6 +608,8 @@ class BrainwaveAudioEngine {
       rightOsc2.start(0);
       leftOsc2.stop(duration);
       rightOsc2.stop(duration);
+    } else {
+      binauralGain.connect(masterGain);
     }
 
     // Nature sound layer — generated directly with offline sample rate to avoid cache mismatch
@@ -635,7 +683,14 @@ class BrainwaveAudioEngine {
     noiseSrc.connect(noiseGain);
     noiseGain.connect(masterGain);
 
-    masterGain.connect(offlineCtx.destination);
+    const compressor = offlineCtx.createDynamicsCompressor();
+    compressor.threshold.value = -12;
+    compressor.knee.value = 8;
+    compressor.ratio.value = 4;
+    compressor.attack.value = 0.005;
+    compressor.release.value = 0.05;
+    masterGain.connect(compressor);
+    compressor.connect(offlineCtx.destination);
 
     // User audio
     if (this.userBuffer) {
@@ -853,6 +908,7 @@ class BrainwaveAudioEngine {
         this._secondaryGain, this.ctx.currentTime, 0.05,
       );
     }
+    this.applyGainCompensation();
   }
 
   setSecondaryFactor(factor: number) {
@@ -867,6 +923,7 @@ class BrainwaveAudioEngine {
     if (this._modulator) {
       this._modulator.setAmDepth(this._amDepth);
     }
+    this.applyGainCompensation();
   }
 
   setAmRate(rate: number) {

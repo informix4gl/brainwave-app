@@ -2,7 +2,7 @@ export const zh = {
   // App
   "app.title": "BrainSync",
   "app.tagline": "// 脑波同化音乐",
-  "app.footer": "BrainSync v0.1.1",
+  "app.footer": "BrainSync v0.1.2",
   "app.developer": "开发者 Teng Zuo",
 
   // Generate page
@@ -166,7 +166,7 @@ export const zh = {
 export const en = {
   "app.title": "BrainSync",
   "app.tagline": "// brainwave entrainment",
-  "app.footer": "BrainSync v0.1.1",
+  "app.footer": "BrainSync v0.1.2",
   "app.developer": "by Teng Zuo",
 
   "generate.title": "generate.tsx — Brainwave Studio",
