@@ -101,7 +101,8 @@ Delta、Theta、Alpha 状态自动拦截高干扰曲目。若用户强制载入�
 - **Real-time FFT Visualization**: 48-bar spectrum, color-themed per brainwave state, `<canvas>` rendered
 - **42 Curated Song Recommendations** (8 per state, bilingual Chinese/English)
 - **WAV/MP3 Export** with async progress tracking and auto-open-folder option
-- **Collapsible Help Texts** — 2-line clamp by default, expandable via 更多/More toggle
+feature/v0.1.2
+- **Smart Collapsible Help Texts** — auto-detects text overflow; 更多/More toggle only appears when content exceeds 2 lines
 - **Dark Geek Theme** with scanline overlay, glitch text effects, terminal-inspired UI
 - **Full i18n** (简体中文 / English) — 300+ translation keys, zero hardcoded strings
 - **Keyboard Shortcuts**: 1–5 brainwave states, Space play/pause, Esc stop, Q Quantum Sync

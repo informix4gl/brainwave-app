@@ -1,7 +1,7 @@
 "use client";
 
 import { useLanguage } from "../i18n";
-import { GeekCard, CollapsibleText } from "../components/ui";
+import { GeekCard } from "../components/ui";
 
 export default function AboutPage() {
   const { t } = useLanguage();
@@ -18,19 +18,17 @@ export default function AboutPage() {
   ██████╔╝██║  ██║██║  ██║██║██║ ╚████║███████║   ██║   ██║ ╚████║╚██████╗
   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═══╝ ╚═════╝`}
         </pre>
-        <CollapsibleText>
-          <p className="text-[18px] text-[var(--muted)] leading-relaxed">
-            {t("about.tagline")}
-          </p>
-        </CollapsibleText>
+        <p className="text-[18px] text-[var(--muted)] leading-relaxed">
+          {t("about.tagline")}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* What is it */}
         <GeekCard title={t("about.what")}>
           <div className="text-[18px] font-mono text-[var(--muted)] space-y-3 leading-relaxed">
-            <CollapsibleText><p>{t("about.whatDesc")}</p></CollapsibleText>
-            <CollapsibleText><p>{t("about.whatDesc2")}</p></CollapsibleText>
+            <p>{t("about.whatDesc")}</p>
+            <p>{t("about.whatDesc2")}</p>
           </div>
         </GeekCard>
 
@@ -71,11 +69,11 @@ export default function AboutPage() {
         {/* How it works */}
         <GeekCard title={t("about.how")}>
           <div className="text-[18px] font-mono text-[var(--muted)] space-y-2 leading-relaxed">
-            <CollapsibleText><p>{t("about.howDesc1")}</p></CollapsibleText>
-            <CollapsibleText><p>{t("about.howDesc2")}</p></CollapsibleText>
-            <CollapsibleText><p>{t("about.howDesc3")}</p></CollapsibleText>
-            <CollapsibleText><p>{t("about.howDesc4")}</p></CollapsibleText>
-            <CollapsibleText><p>{t("about.howDesc5")}</p></CollapsibleText>
+            <p>{t("about.howDesc1")}</p>
+            <p>{t("about.howDesc2")}</p>
+            <p>{t("about.howDesc3")}</p>
+            <p>{t("about.howDesc4")}</p>
+            <p>{t("about.howDesc5")}</p>
           </div>
         </GeekCard>
 
@@ -104,20 +102,16 @@ export default function AboutPage() {
         <h2 className="text-xs font-mono text-[var(--accent)] uppercase tracking-wider mb-3">
           ♥ {t("about.thanks")}
         </h2>
-        <CollapsibleText>
-          <p className="text-[18px] font-mono text-[var(--muted)] leading-relaxed">
-            {t("about.thanksDesc")}
-          </p>
-        </CollapsibleText>
+        <p className="text-[18px] font-mono text-[var(--muted)] leading-relaxed">
+          {t("about.thanksDesc")}
+        </p>
       </div>
 
       {/* Footer note */}
       <div className="mt-6 p-4 rounded-lg border border-[var(--border)] bg-[var(--card)] text-center">
-        <CollapsibleText>
-          <p className="text-[18px] font-mono text-[var(--muted)]">
-            {t("about.disclaimer")}
-          </p>
-        </CollapsibleText>
+        <p className="text-[18px] font-mono text-[var(--muted)]">
+          {t("about.disclaimer")}
+        </p>
       </div>
     </div>
   );

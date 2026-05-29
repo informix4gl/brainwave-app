@@ -126,7 +126,7 @@
 - [x] Full i18n coverage — zero hardcoded strings
 - [x] Font size slider in header (10–25px, persisted)
 - [x] Developer credit: "Teng Zuo" in footer
-- [x] Footer version: BrainSync v0.1.1
+- [x] Footer version: BrainSync v0.1.2
 - [x] Keyboard shortcuts legend in info banner
 - [x] Error handling for all Tauri commands (retry button)
 - [x] Consistent geek aesthetic (CSS variables, no hardcoded colors)
@@ -214,6 +214,23 @@
 - [x] Initial commit: 75 files, 14,829 lines
 - [x] `CHANGELOG.md` — v0.9.0 through v0.13.0 with full release notes
 - [x] `.github/workflows/release.yml` — automated CI/CD for v* tags (Windows/macOS/Ubuntu)
+- [x] `.github/workflows/release.yml` — Windows portable .exe extraction + upload (softprops/action-gh-release)
+- [x] `README.md` — full v0.1.1 rewrite: Quantum Sync, interference audit, credits, bilingual
+- [x] `tauri.conf.json` version bump 0.1.0 → 0.1.2
+
+---
+
+## ✅ Phase 15: v0.1.2 — Audio Mix Normalization & UI Polish
+
+- [x] **Quantum Sync auto-gain compensation**: RMS-energy-preserving formula reduces primary `binauralGain` proportionally when secondary harmonic layer is active, keeping total binaural output consistent with non-advanced mode
+- [x] **Master DynamicsCompressorNode**: soft-knee 4:1 compressor (-12dB threshold, 8dB knee) on master output chain to catch residual peaks and prevent clipping
+- [x] **Default `secondaryGain` lowered**: `0.5` → `0.2` — harmonic layer now acts as subtle texture, not volume boost
+- [x] **Gain compensation auto-triggers**: `setCarrierVolume`, `setSecondaryGain`, `setAmDepth` all call `applyGainCompensation()` to maintain mix balance during real-time adjustments
+- [x] **Export pipeline parity**: same compressor + gain compensation applied in `OfflineAudioContext` rendering
+- [x] **`CollapsibleText` overflow detection**: `useRef` + `ResizeObserver` measures actual `scrollHeight` vs `clientHeight` — "More/更多" button only appears when text genuinely overflows 2 lines
+- [x] **AboutPage full expansion**: all `CollapsibleText` wrappers removed — descriptive text always displayed in full
+- [x] All version strings bumped to `0.1.2` (`package.json`, `package-lock.json`, `tauri.conf.json`, `Cargo.toml`, `README.md`)
+- [x] `CHANGELOG.md` updated with `[0.1.2]` entry in Keep a Changelog format
 
 ---
 
